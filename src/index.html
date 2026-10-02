@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102d36">
+  <title>Faro | Gestión de alertas</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div id="login-screen" class="login-screen">
+    <section class="login-card" aria-labelledby="login-title">
+      <div class="brand-mark" aria-hidden="true">F</div>
+      <p class="eyebrow">ENTORNO ACADÉMICO · DATOS SINTÉTICOS</p>
+      <h1 id="login-title">Gestión de alertas</h1>
+      <p class="muted">Inicie sesión con una cuenta de demostración. Las contraseñas se muestran al arrancar el servidor.</p>
+      <form id="login-form">
+        <label for="login-user">Usuario</label>
+        <input id="login-user" name="username" autocomplete="username" required maxlength="80">
+        <label for="login-password">Contraseña</label>
+        <input id="login-password" name="password" type="password" autocomplete="current-password" required maxlength="256">
+        <button class="button button-primary full-width" type="submit">Entrar al tablero</button>
+      </form>
+      <p id="login-error" class="notice notice-error" role="alert" hidden></p>
+      <p class="login-footnote">Los casos, usuarios y evidencias son ficticios. Esta demo local no es apta para producción.</p>
+    </section>
+  </div>
+
+  <div id="app" hidden>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Faro, inicio">
+        <span class="brand-mark" aria-hidden="true">F</span>
+        <span><strong>faro</strong><small>ALERTAS · AML / FRAUDE</small></span>
+      </a>
+      <div class="topbar-right">
+        <span class="demo-badge"><span></span> SOLO DATOS SINTÉTICOS</span>
+        <div class="identity">
+          <span id="user-avatar" class="avatar">U</span>
+          <span><strong id="user-name"></strong><small id="user-role"></small></span>
+        </div>
+        <button id="logout-button" class="button button-quiet" type="button">Salir</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="page-heading">
+        <div>
+          <p class="eyebrow">CONTROL OPERATIVO · PROTOTIPO</p>
+          <h1>Tablero de alertas</h1>
+          <p>Priorice la cola, documente cada decisión y conserve una bitácora reconstruible.</p>
+        </div>
+        <div class="heading-meta"><span class="live-dot"></span> ACTUALIZADO <time id="updated-at"></time></div>
+      </section>
+
+      <nav class="tabs" aria-label="Secciones del tablero">
+        <button class="tab active" data-view="operation" type="button">Operación</button>
+        <button class="tab" data-view="audit" type="button">Auditoría <span id="exception-tab-count" class="tab-count">2</span></button>
+      </nav>
+
+      <section id="operation-view">
+        <div id="metrics" class="metrics"></div>
+        <div class="dashboard-grid">
+          <section class="panel queue-panel" aria-labelledby="queue-heading">
+            <div class="panel-heading">
+              <div><p class="eyebrow">PRIORIZACIÓN</p><h2 id="queue-heading">Cola de alertas</h2></div>
+              <span id="alert-total" class="count-pill">24 casos</span>
+            </div>
+            <div class="filter-row">
+              <label class="sr-only" for="status-filter">Filtrar por estado</label>
+              <select id="status-filter">
+                <option value="all">Todos los estados</option>
+                <option value="new">Nuevas</option><option value="assigned">Asignadas</option>
+                <option value="analysis">En análisis</option><option value="escalated">Escaladas</option>
+                <option value="closed">Cerradas</option><option value="reopened">Reabiertas</option>
+              </select>
+              <label class="sr-only" for="priority-filter">Filtrar por prioridad</label>
+              <select id="priority-filter">
+                <option value="all">Toda prioridad</option><option value="critical">Crítica</option>
+                <option value="high">Alta</option><option value="medium">Media</option><option value="low">Baja</option>
+              </select>
+            </div>
+            <div id="alert-list" class="alert-list" aria-live="polite"></div>
+          </section>
+
+          <section class="panel detail-panel" aria-labelledby="detail-heading">
+            <div id="detail-content" class="detail-empty">
+              <span class="empty-icon" aria-hidden="true">↖</span>
+              <h2 id="detail-heading">Seleccione una alerta</h2>
+              <p>Consulte el historial completo y las acciones permitidas para su rol.</p>
+            </div>
+          </section>
+        </div>
+        <div class="charts-grid">
+          <section class="panel chart-panel">
+            <div class="panel-heading"><div><p class="eyebrow">DISTRIBUCIÓN</p><h2>Volumen por estado</h2></div><span class="chart-caption">24 alertas sintéticas</span></div>
+            <div id="status-chart" class="bar-chart"></div>
+          </section>
+          <section class="panel chart-panel">
+            <div class="panel-heading"><div><p class="eyebrow">ANTIGÜEDAD</p><h2>Alertas abiertas</h2></div><span class="chart-caption">Días desde creación</span></div>
+            <div id="age-chart" class="age-chart"></div>
+            <p class="chart-note">El vencimiento se calcula con SLA académico configurable por prioridad.</p>
+          </section>
+        </div>
+      </section>
+
+      <section id="audit-view" hidden>
+        <div class="audit-intro">
+          <div><p class="eyebrow">TRAZABILIDAD Y CONTROL</p><h2>Auditoría de alertas</h2>
+            <p>Las transiciones registran actor, fecha, motivo y referencia sintética de evidencia. El acceso de auditoría es de solo lectura.</p></div>
+          <span class="read-only-badge">SOLO LECTURA</span>
+        </div>
+        <div id="audit-metrics" class="metrics"></div>
+        <div class="audit-grid">
+          <section class="panel">
+            <div class="panel-heading"><div><p class="eyebrow">SEGUIMIENTO</p><h2>Excepciones registradas</h2></div></div>
+            <div id="exception-list" class="exception-list"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-heading"><div><p class="eyebrow">PLAZOS</p><h2>Alertas vencidas</h2></div></div>
+            <div id="overdue-list" class="overdue-list"></div>
+          </section>
+        </div>
+        <p class="security-note"><strong>Segregación de funciones:</strong> el sistema impide que el analista cierre su caso crítico; un revisor distinto debe aprobarlo. Los intentos bloqueados también quedan en la bitácora.</p>
+      </section>
+      <footer><span>FARO · PROTOTIPO ACADÉMICO</span><span>Solo datos sintéticos · Sin conexiones institucionales</span></footer>
+    </main>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>
