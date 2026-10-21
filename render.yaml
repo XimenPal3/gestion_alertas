@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: faro-alertas
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --chdir src wsgi:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 30
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: faro-postgres
+          property: connectionString
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: PYTHONUNBUFFERED
+        value: "true"
+      - key: DEMO_PASSWORD_SUPERVISOR_D
+        generateValue: true
+      - key: DEMO_PASSWORD_ANALISTA_A
+        generateValue: true
+      - key: DEMO_PASSWORD_ANALISTA_B
+        generateValue: true
+      - key: DEMO_PASSWORD_REVISOR_E
+        generateValue: true
+      - key: DEMO_PASSWORD_AUDITORIA_P
+        generateValue: true
+
+databases:
+  - name: faro-postgres
+    plan: free
+    region: oregon
+    databaseName: faro_alertas
+    user: faro_app
+    ipAllowList: []
