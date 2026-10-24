@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 from backend.application import create_application
 from backend.config import Settings
-from backend.database import POSTGRES_SCHEMA
+from backend.database import Database, POSTGRES_SCHEMA
 from backend.http_api import create_app
 from backend.security import LoginRateLimiter
 
@@ -234,6 +234,35 @@ class WorkflowTests(unittest.TestCase):
     def test_postgres_schema_uses_supported_identity_column(self):
         self.assertIn("id BIGSERIAL PRIMARY KEY", POSTGRES_SCHEMA)
         self.assertNotIn("AUTOINCREMENT", POSTGRES_SCHEMA)
+
+    def test_postgres_transactions_never_use_sqlite_begin_immediate(self):
+        class FakePostgresConnection:
+            def __init__(self):
+                self.commands = []
+                self.in_transaction = False
+                self.committed = False
+                self.closed = False
+
+            def execute(self, statement):
+                self.commands.append(statement)
+
+            def commit(self):
+                self.committed = True
+
+            def rollback(self):
+                self.in_transaction = False
+
+            def close(self):
+                self.closed = True
+
+        database = Database(Path(self.temp_dir.name) / "unused.sqlite3", "postgresql://example")
+        fake_connection = FakePostgresConnection()
+        database.connect = lambda: fake_connection
+        with database.transaction(immediate=True):
+            pass
+        self.assertEqual(fake_connection.commands, ["BEGIN"])
+        self.assertTrue(fake_connection.committed)
+        self.assertTrue(fake_connection.closed)
 
     def test_legacy_password_hash_is_upgraded_after_successful_login(self):
         password = "legacy-password"

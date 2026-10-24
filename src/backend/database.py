@@ -127,7 +127,8 @@ class Database:
     def transaction(self, immediate=False):
         connection = self.connect()
         try:
-            connection.execute("BEGIN IMMEDIATE" if immediate else "BEGIN")
+            begin = "BEGIN IMMEDIATE" if immediate and not self.is_postgres else "BEGIN"
+            connection.execute(begin)
             yield connection
             connection.commit()
         except Exception:
