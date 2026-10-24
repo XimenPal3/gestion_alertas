@@ -67,7 +67,8 @@ class PostgresConnection:
         return self.raw.execute(sql.replace("?", "%s"), parameters)
 
     def executemany(self, sql, parameters):
-        return self.raw.executemany(sql.replace("?", "%s"), parameters)
+        with self.raw.cursor() as cursor:
+            return cursor.executemany(sql.replace("?", "%s"), parameters)
 
     @property
     def in_transaction(self):

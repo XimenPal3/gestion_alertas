@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 from backend.application import create_application
 from backend.config import Settings
-from backend.database import Database, POSTGRES_SCHEMA
+from backend.database import Database, POSTGRES_SCHEMA, PostgresConnection
 from backend.http_api import create_app
 from backend.security import LoginRateLimiter
 
@@ -274,6 +274,45 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(fake_connection.commands, ["BEGIN"])
         self.assertTrue(fake_connection.committed)
         self.assertTrue(fake_connection.closed)
+
+    def test_postgres_executemany_uses_cursor_and_converts_placeholders(self):
+        class FakeCursor:
+            def __init__(self):
+                self.statement = None
+                self.parameters = None
+
+            def executemany(self, statement, parameters):
+                self.statement = statement
+                self.parameters = list(parameters)
+                return self
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+        class FakeConnection:
+            def __init__(self):
+                self.cursor_instance = FakeCursor()
+
+            def cursor(self):
+                return self.cursor_instance
+
+        raw = FakeConnection()
+        result = PostgresConnection(raw).executemany(
+            "INSERT INTO exceptions (code, alert_id) VALUES (?, ?)",
+            [("EXC-1", "AL-1"), ("EXC-2", "AL-2")],
+        )
+        self.assertIs(result, raw.cursor_instance)
+        self.assertEqual(
+            raw.cursor_instance.statement,
+            "INSERT INTO exceptions (code, alert_id) VALUES (%s, %s)",
+        )
+        self.assertEqual(
+            raw.cursor_instance.parameters,
+            [("EXC-1", "AL-1"), ("EXC-2", "AL-2")],
+        )
 
     def test_legacy_password_hash_is_upgraded_after_successful_login(self):
         password = "legacy-password"
