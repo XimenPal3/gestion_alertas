@@ -60,7 +60,10 @@ def seed_if_empty(database, password_hasher, output=print):
     with database.transaction(immediate=True) as connection:
         if database.is_postgres:
             connection.execute("SELECT pg_advisory_xact_lock(782134921)")
-        if connection.execute("SELECT COUNT(*) FROM users").fetchone()[0] == 0:
+        user_count = connection.execute(
+            "SELECT COUNT(*) AS total FROM users"
+        ).fetchone()["total"]
+        if user_count == 0:
             generated_passwords = []
             for username, role in DEMO_USERS:
                 env_name = "DEMO_PASSWORD_" + username.upper().replace(".", "_")
@@ -78,7 +81,10 @@ def seed_if_empty(database, password_hasher, output=print):
                     output("  {}: {}".format(username, password))
                 output("Las credenciales no se pueden recuperar; elimine la base local para regenerarlas.\n")
 
-        if connection.execute("SELECT COUNT(*) FROM alerts").fetchone()[0] != 0:
+        alert_count = connection.execute(
+            "SELECT COUNT(*) AS total FROM alerts"
+        ).fetchone()["total"]
+        if alert_count != 0:
             return
 
         now = utc_now()

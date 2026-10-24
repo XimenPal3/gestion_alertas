@@ -41,6 +41,17 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(data["counts"]["escalated"], 3)
         self.assertEqual(data["counts"]["closed"], 4)
 
+    def test_seed_count_queries_use_named_columns_for_postgres_rows(self):
+        with self.app.database.connection() as connection:
+            user_count = connection.execute(
+                "SELECT COUNT(*) AS total FROM users"
+            ).fetchone()["total"]
+            alert_count = connection.execute(
+                "SELECT COUNT(*) AS total FROM alerts"
+            ).fetchone()["total"]
+        self.assertEqual(user_count, 5)
+        self.assertEqual(alert_count, 24)
+
     def test_assigned_analyst_cannot_close_critical_alert_and_attempt_is_audited(self):
         actor = {"username": "analista.a", "role": "analyst"}
         before = len(self.service.detail("AL-0192")["events"])
